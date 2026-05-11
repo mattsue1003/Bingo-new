@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>賓果紙本生成器 · Bingo Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,400&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<style id="dynamic-print-style">@page { size: A4 portrait; margin: 8mm; }</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<style>
+  :root{
+    --bg:#f4ecda;
+    --paper:#fffaf0;
+    --paper-2:#faf4e3;
+    --ink:#1a120b;
+    --ink-soft:#5a4838;
+    --ink-muted:#8a7a68;
+    --line:#d4c5a8;
+    --line-soft:#e6dcc4;
+    --accent:#d63a2f;
+    --accent-dark:#a82a22;
+    --accent-soft:#f4d4ce;
+    --gold:#c89414;
+    --gold-soft:#f4e4b8;
+    --green:#3d6e36;
+    --shadow:0 1px 0 #d8c8a4, 0 6px 16px rgba(80,50,20,.08);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(ellipse at 15% 10%, rgba(214,58,47,.06) 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 80%, rgba(200,148,20,.07) 0%, transparent 50%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /></filter><rect width='100' height='100' filter='url(%23n)' opacity='0.04'/></svg>");
+  }
+  ::selection{background:var(--accent);color:#fff}
+  button{font-family:inherit}
+
+  /* ============ APP LAYOUT ============ */
+  .app{max-width:1240px;margin:0 auto;padding:24px 20px 60px}
+  .header{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    padding:20px 0 18px;margin-bottom:24px;
+    border-bottom:2.5px solid var(--ink);
+    position:relative;
+  }
+  .header::after{content:'';position:absolute;left:0;right:0;bottom:-7px;height:1.5px;background:var(--ink)}
+  .brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .logo{
+    width:42px;height:42px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #fff, var(--accent));
+    color:#fff;display:inline-flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-weight:900;font-size:22px;
+    box-shadow:0 2px 8px rgba(214,58,47,.3), inset -3px -3px 8px rgba(0,0,0,.15), inset 3px 3px 6px rgba(255,255,255,.4);
+    transform:translateY(8px);
+  }
+  .title{font-family:'Noto Serif TC',serif;font-weight:900;font-size:34px;letter-spacing:-.02em;line-height:1}
+  .title em{font-family:'Fraunces',serif;font-style:italic;font-weight:400;color:var(--accent);font-size:.85em;margin-left:4px}
+  .tagline{font-size:12px;color:var(--ink-muted);letter-spacing:.18em;text-transform:uppercase;margin-top:4px;font-family:'Fraunces',serif;font-style:italic;font-weight:400}
+
+  /* ============ TABS ============ */
+  .tabs{
+    display:flex;gap:2px;margin-bottom:24px;
+    border-bottom:1px solid var(--line);
+    overflow-x:auto;
+  }
+  .tab{
+    padding:14px 22px;background:transparent;border:none;cursor:pointer;
+    font-size:15px;font-weight:600;color:var(--ink-muted);
+    border-bottom:3px solid transparent;margin-bottom:-1px;
+    white-space:nowrap;transition:color .15s;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:22px;height:22px;border-radius:50%;
+    background:var(--ink);color:#fff;font-size:11px;font-weight:700;
+    font-family:'Fraunces',serif;
+  }
+  .tab.active .tab-num{background:var(--accent)}
+
+  .panel{display:none;animation:fadeIn .25s ease}
+  .panel.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ============ SETTINGS ============ */
+  .settings-grid{
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    gap:20px;
+  }
+  @media (max-width:880px){.settings-grid{grid-template-columns:1fr}}
+
+  .section{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:22px;
+    box-shadow:var(--shadow);
+  }
+  .section + .section{margin-top:20px}
+  .section-title{
+    font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;
+    margin-bottom:16px;display:flex;align-items:center;gap:10px;
+  }
+  .section-title::before{
+    content:'';display:inline-block;width:5px;height:18px;
+    background:var(--accent);border-radius:1px;
+  }
+  .section-title .num{
+    font-family:'Fraunces',serif;font-style:italic;font-weight:400;
+    color:var(--ink-muted);font-size:14px;margin-left:auto;
+  }
+  .section-desc{font-size:12.5px;color:var(--ink-muted);margin-bottom:14px;line-height:1.5}
+
+  .field{margin-bottom:14px}
+  .field:last-child{margin-bottom:0}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field-row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+
+  .label{
+    display:block;font-size:12px;font-weight:600;
+    color:var(--ink-soft);margin-bottom:6px;
+    letter-spacing:.04em;text-transform:uppercase;
+  }
+  .input,.select,.textarea,.number{
+    width:100%;padding:10px 12px;font-family:inherit;font-size:14px;
+    background:#fff;border:1.5px solid var(--line);border-radius:7px;
+    color:var(--ink);transition:border-color .15s, box-shadow .15s;
+  }
+  .input:focus,.select:focus,.textarea:focus,.number:focus{
+    outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(214,58,47,.12);
+  }
+  .textarea{resize:vertical;min-height:90px;font-family:inherit}
+
+  /* segmented controls */
+  .seg{
+    display:inline-flex;background:#fff;border:1.5px solid var(--line);
+    border-radius:8px;padding:3px;gap:2px;width:100%;
+  }
+  .seg-btn{
+    flex:1;padding:8px 10px;background:transparent;border:none;
+    font-size:13px;font-weight:600;color:var(--ink-soft);
+    cursor:pointer;border-radius:5px;transition:all .15s;
+    font-family:inherit;
+  }
+  .seg-btn:hover{color:var(--ink)}
+  .seg-btn.active{background:var(--ink);color:var(--paper)}
+
+  /* type cards */
+  .type-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:8px;
+  }
+  .type-card{
+    padding:14px 8px 12px;background:#fff;
+    border:1.5px solid var(--line);border-radius:10px;
+    cursor:pointer;text-align:center;transition:all .15s;
+    position:relative;
+  }
+  .type-card:hover{border-color:var(--ink);transform:translateY(-1px)}
+  .type-card.active{
+    border-color:var(--accent);background:var(--accent-soft);
+    border-width:2px;padding:13px 7px 11px;
+  }
+  .type-icon{font-size:26px;line-height:1;margin-bottom:8px}
+  .type-name{font-size:13px;font-weight:700;color:var(--ink)}
+  .type-desc{font-size:10.5px;color:var(--ink-muted);margin-top:3px;line-height:1.3}
+  .type-card.active .type-desc{color:var(--ink-soft)}
+
+  /* checkboxes */
+  .check{
+    display:flex;align-items:center;gap:8px;padding:8px 10px;
+    background:#fff;border:1px solid var(--line);border-radius:7px;
+    cursor:pointer;font-size:13.5px;user-select:none;
+  }
+  .check input{accent-color:var(--accent);width:16px;height:16px}
+  .check.compact{padding:6px 10px;font-size:13px}
+
+  /* icon picker */
+  .cat-tabs{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
+  .cat-tab{
+    padding:5px 11px;font-size:12px;font-weight:500;font-family:inherit;
+    background:#fff;border:1px solid var(--line);border-radius:14px;
+    cursor:pointer;color:var(--ink-soft);
+  }
+  .cat-tab:hover{color:var(--ink)}
+  .cat-tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .icon-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));
+    gap:5px;max-height:220px;overflow-y:auto;
+    padding:8px;background:var(--paper-2);border-radius:8px;
+    border:1px solid var(--line-soft);
+  }
+  .icon-cell{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    font-size:22px;background:#fff;border:1.5px solid transparent;
+    border-radius:6px;cursor:pointer;transition:all .1s;
+  }
+  .icon-cell:hover{border-color:var(--ink-soft);transform:scale(1.05)}
+  .icon-cell.selected{
+    border-color:var(--accent);background:var(--accent-soft);
+    box-shadow:0 0 0 2px rgba(214,58,47,.15);
+  }
+  .picker-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;color:var(--ink-muted)}
+
+  /* chips for adjectives */
+  .chips{
+    display:flex;flex-wrap:wrap;gap:6px;
+    max-height:240px;overflow-y:auto;padding:4px;
+  }
+  .chip{
+    padding:5px 11px;background:#fff;border:1.5px solid var(--line);
+    border-radius:14px;font-size:13px;cursor:pointer;
+    user-select:none;transition:all .12s;color:var(--ink);
+  }
+  .chip:hover{border-color:var(--ink)}
+  .chip.selected{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* image upload */
+  .upload-zone{
+    border:2px dashed var(--line);border-radius:10px;
+    padding:24px 16px;text-align:center;
+    background:var(--paper-2);cursor:pointer;
+    transition:all .2s;color:var(--ink-soft);
+  }
+  .upload-zone:hover{border-color:var(--accent);background:#fff;color:var(--ink)}
+  .upload-zone .big{font-size:30px;margin-bottom:6px}
+  .upload-zone .small{font-size:11px;color:var(--ink-muted);margin-top:4px}
+
+  .image-list{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));
+    gap:6px;margin-top:12px;
+  }
+  .image-item{
+    aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;
+    border:1px solid var(--line);background:#fff;
+  }
+  .image-item img{width:100%;height:100%;object-fit:cover;display:block}
+  .image-item .label-num{
+    position:absolute;left:3px;bottom:3px;
+    background:rgba(0,0,0,.65);color:#fff;
+    font-size:10px;padding:1px 5px;border-radius:8px;
+    font-family:'Fraunces',serif;font-weight:600;
+  }
+  .image-item .remove{
+    position:absolute;top:3px;right:3px;
+    width:18px;height:18px;background:rgba(0,0,0,.7);color:#fff;
+    border:none;border-radius:50%;font-size:11px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+  }
+  .image-item .remove:hover{background:var(--accent)}
+
+  .help-text{font-size:11.5px;color:var(--ink-muted);margin-top:5px;line-height:1.5}
+
+  /* buttons */
+  .btn{
+    padding:10px 18px;font-family:inherit;font-size:14px;font-weight:600;
+    border:none;border-radius:8px;cursor:pointer;transition:all .15s;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 0 var(--accent-dark)}
+  .btn-primary:hover{background:var(--accent-dark);transform:translateY(-1px);box-shadow:0 3px 0 #7a1f18}
+  .btn-primary:active{transform:translateY(1px);box-shadow:0 1px 0 var(--accent-dark)}
+  .btn-dark{background:var(--ink);color:var(--paper);box-shadow:0 2px 0 #000}
+  .btn-dark:hover{background:#000;transform:translateY(-1px)}
+  .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .btn-sm{padding:6px 12px;font-size:12.5px;font-weight:600}
+  .btn-icon{
+    width:34px;height:34px;padding:0;justify-content:center;
+    background:#fff;border:1px solid var(--line);color:var(--ink);border-radius:7px;
+  }
+  .btn-icon:hover{border-color:var(--ink)}
+
+  /* action bar */
+  .action-bar{
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+    margin-bottom:20px;padding:14px 18px;
+    background:var(--paper);border:1px solid var(--line);
+    border-radius:10px;
+  }
+  .action-bar .meta{
+    margin-right:auto;font-size:13px;color:var(--ink-soft);
+    display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+  }
+  .action-bar .meta strong{color:var(--ink);font-family:'Fraunces',serif;font-weight:700}
+
+  /* ============ PREVIEW ============ */
+  .preview-area{
+    background:#dccdb0;
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><circle cx='20' cy='20' r='1' fill='%23b0a085' opacity='0.4'/></svg>");
+    padding:24px;border-radius:10px;min-height:400px;
+    border:1px solid var(--line);
+  }
+  .preview-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:24px;
+  }
+  .preview-card-wrap{
+    background:#fff;padding:14px;border-radius:6px;
+    box-shadow:0 4px 12px rgba(0,0,0,.15), 0 1px 0 rgba(0,0,0,.08);
+    transform:rotate(-.4deg);
+    transition:transform .2s;
+  }
+  .preview-card-wrap:nth-child(2n){transform:rotate(.5deg)}
+  .preview-card-wrap:nth-child(3n){transform:rotate(-.3deg)}
+  .preview-card-wrap:hover{transform:rotate(0) scale(1.02)}
+  .preview-label{
+    font-family:'Fraunces',serif;font-style:italic;font-size:12px;
+    color:var(--ink-muted);text-align:center;margin-top:8px;
+  }
+
+  .empty-state{
+    text-align:center;padding:80px 20px;color:var(--ink-soft);
+  }
+  .empty-state .big{font-size:48px;margin-bottom:14px;opacity:.6}
+  .empty-state h3{font-family:'Noto Serif TC',serif;font-size:20px;margin-bottom:6px;color:var(--ink)}
+  .empty-state p{font-size:14px;line-height:1.6;max-width:380px;margin:0 auto}
+
+  .warning{
+    background:var(--gold-soft);border:1px solid var(--gold);
+    color:#5a4310;padding:12px 16px;border-radius:8px;
+    font-size:13.5px;margin-bottom:16px;line-height:1.5;
+    display:flex;gap:8px;align-items:flex-start;
+  }
+  .warning::before{content:'⚠';font-size:16px;flex-shrink:0}
+
+  /* ============ DRAW TOOL ============ */
+  .draw-layout{
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:20px;
+  }
+  @media (max-width:900px){.draw-layout{grid-template-columns:1fr}}
+
+  .draw-main{
+    background:var(--paper);border:1px solid var(--line);
+    border-radius:12px;padding:28px;text-align:center;
+    min-height:520px;display:flex;flex-direction:column;
+    box-shadow:var(--shadow);
+    position:relative;overflow:hidden;
+  }
+  .draw-main::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 30%, rgba(214,58,47,.04), transparent 60%);
+    pointer-events:none;
+  }
+  .round-name-display{
+    font-family:'Fraunces',serif;font-style:italic;font-weight:400;
+    font-size:14px;color:var(--ink-muted);
+    letter-spacing:.05em;margin-bottom:4px;position:relative;
+  }
+  .round-title{
+    font-family:'Noto Serif TC',serif;font-weight:700;font-size:24px;
+    margin-bottom:18px;position:relative;
+  }
+  .draw-display{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    margin:10px 0 24px;position:relative;min-height:240px;
+  }
+  .draw-ball{
+    width:240px;height:240px;border-radius:50%;
+    background:radial-gradient(circle at 30% 25%, #fff8, transparent 60%), radial-gradient(circle at 50% 50%, #e84e2b, #b32d22);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif TC',serif;font-weight:900;
+    box-shadow:
+      0 8px 30px rgba(214,58,47,.4),
+      inset -10px -10px 25px rgba(0,0,0,.18),
+      inset 8px 8px 16px rgba(255,255,255,.35);
+    text-shadow:0 2px 6px rgba(0,0,0,.3);
+    transition:transform .3s;
+    overflow:hidden;
+    padding:20px;
+    text-align:center;
+    word-break:break-word;
+  }
+  .draw-ball.has-num{font-size:84px}
+  .draw-ball.has-emoji{font-size:96px}
+  .draw-ball.has-text{font-size:32px;line-height:1.15}
+  .draw-ball.has-text.long{font-size:24px}
+  .draw-ball.has-text.very-long{font-size:18px}
+  .draw-ball.has-image{padding:14px;background:radial-gradient(circle at 30% 25%, #fff8, transparent 60%), radial-gradient(circle at 50% 50%, #f4d4ce, #e8a298)}
+  .draw-ball.has-image img{width:100%;height:100%;object-fit:contain;border-radius:50%}
+  .draw-ball.empty{
+    background:radial-gradient(circle at 30% 25%, #fff8, transparent 60%), radial-gradient(circle at 50% 50%, #f4ecda, #d4c5a8);
+    color:var(--ink-muted);font-size:18px;
+    font-family:'Noto Sans TC',sans-serif;font-weight:500;
+  }
+  .draw-ball.spin{animation:ballSpin .65s cubic-bezier(.4,1.4,.6,1)}
+  @keyframes ballSpin{
+    0%{transform:scale(.7) rotate(-30deg);opacity:.5}
+    50%{transform:scale(1.12) rotate(180deg);opacity:1}
+    100%{transform:scale(1) rotate(360deg);opacity:1}
+  }
+
+  .draw-stats{
+    display:flex;gap:30px;justify-content:center;margin-bottom:18px;
+    position:relative;
+  }
+  .stat{text-align:center}
+  .stat-value{
+    font-family:'Fraunces',serif;font-size:30px;font-weight:700;
+    color:var(--ink);line-height:1;
+  }
+  .stat-value.accent{color:var(--accent)}
+  .stat-label{
+    font-size:11px;color:var(--ink-muted);
+    text-transform:uppercase;letter-spacing:.12em;
+    margin-top:4px;font-family:'Fraunces',serif;
+  }
+
+  .draw-actions{
+    display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+    position:relative;
+  }
+  .btn-draw{
+    background:var(--accent);color:#fff;
+    padding:14px 36px;font-size:16px;font-weight:700;
+    border-radius:10px;border:none;cursor:pointer;
+    box-shadow:0 3px 0 var(--accent-dark), 0 6px 16px rgba(214,58,47,.3);
+    transition:all .15s;
+  }
+  .btn-draw:hover{transform:translateY(-2px);box-shadow:0 5px 0 var(--accent-dark), 0 8px 20px rgba(214,58,47,.4)}
+  .btn-draw:active{transform:translateY(1px);box-shadow:0 2px 0 var(--accent-dark), 0 4px 10px rgba(214,58,47,.3)}
+  .btn-draw:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:0 3px 0 var(--accent-dark)}
+
+  .side-card{
+    background:var(--paper);border:1px solid var(--line);
+    border-radius:12px;padding:16px;
+    box-shadow:var(--shadow);
+  }
+  .side-card h4{
+    font-family:'Noto Serif TC',serif;font-weight:700;font-size:15px;
+    margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;
+  }
+  .side-card h4 .count{
+    font-family:'Fraunces',serif;font-weight:400;font-style:italic;
+    color:var(--ink-muted);font-size:13px;
+  }
+
+  .history-list{
+    display:flex;flex-wrap:wrap;gap:5px;
+    max-height:280px;overflow-y:auto;
+    padding:2px;
+  }
+  .history-list:empty::before{
+    content:'尚未開獎';color:var(--ink-muted);font-size:13px;
+    padding:12px 4px;font-style:italic;
+  }
+  .history-item{
+    padding:4px 10px;background:#fff;border:1px solid var(--line);
+    border-radius:14px;font-size:13px;font-weight:500;
+    display:inline-flex;align-items:center;gap:5px;min-height:28px;
+    color:var(--ink);
+  }
+  .history-item.latest{
+    background:var(--accent-soft);border-color:var(--accent);color:var(--accent-dark);
+    animation:popIn .3s ease;
+  }
+  @keyframes popIn{from{transform:scale(.7)}to{transform:scale(1)}}
+  .history-item img{width:22px;height:22px;border-radius:4px;object-fit:cover}
+  .history-item .ord{
+    font-family:'Fraunces',serif;font-weight:700;font-size:10px;
+    color:var(--ink-muted);margin-right:1px;
+  }
+  .history-item.latest .ord{color:var(--accent-dark)}
+
+  .rounds-list{display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto}
+  .round-item{
+    padding:9px 12px;background:#fff;border:1.5px solid var(--line);
+    border-radius:7px;font-size:13px;cursor:pointer;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    transition:all .12s;
+  }
+  .round-item:hover{border-color:var(--ink-soft)}
+  .round-item.active{border-color:var(--accent);background:var(--accent-soft)}
+  .round-item .round-name{font-weight:600;color:var(--ink)}
+  .round-item .round-meta{font-size:11px;color:var(--ink-muted);font-family:'Fraunces',serif}
+  .round-item .round-actions{display:none;gap:4px}
+  .round-item:hover .round-actions{display:flex}
+  .round-item .mini-btn{
+    width:22px;height:22px;border-radius:5px;border:none;
+    background:transparent;color:var(--ink-muted);
+    cursor:pointer;font-size:13px;display:flex;
+    align-items:center;justify-content:center;
+  }
+  .round-item .mini-btn:hover{background:var(--line-soft);color:var(--ink)}
+
+  .add-round{
+    margin-top:8px;width:100%;padding:9px;
+    background:transparent;border:1.5px dashed var(--line);
+    border-radius:7px;cursor:pointer;font-family:inherit;
+    font-size:13px;color:var(--ink-soft);
+  }
+  .add-round:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* ============ MODAL ============ */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(26,18,11,.6);
+    backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;
+    z-index:100;padding:20px;animation:fadeIn .2s;
+  }
+  .modal-bg.show{display:flex}
+  .modal{
+    background:var(--paper);border-radius:12px;padding:24px;
+    max-width:420px;width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);
+  }
+  .modal h3{font-family:'Noto Serif TC',serif;font-weight:700;font-size:20px;margin-bottom:8px}
+  .modal p{font-size:14px;color:var(--ink-soft);margin-bottom:14px;line-height:1.5}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+
+  /* tooltip */
+  [data-tip]{position:relative}
+  [data-tip]::after{
+    content:attr(data-tip);
+    position:absolute;bottom:100%;left:50%;transform:translateX(-50%) translateY(-4px);
+    background:var(--ink);color:#fff;padding:4px 8px;border-radius:4px;
+    font-size:11px;white-space:nowrap;pointer-events:none;
+    opacity:0;transition:opacity .15s;
+  }
+  [data-tip]:hover::after{opacity:1}
+
+  /* utility */
+  .hidden{display:none !important}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .grow{flex:1}
+  .text-muted{color:var(--ink-muted);font-size:12.5px}
+
+  /* scrollbar */
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--ink-muted)}
+
+  /* ============= MOBILE / RESPONSIVE ============= */
+  @media (max-width:760px){
+    .app{padding:14px 12px 40px}
+    .header{padding:12px 0 14px;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+    .logo{width:36px;height:36px;font-size:18px;transform:translateY(4px)}
+    .title{font-size:24px}
+    .title em{font-size:.8em}
+    .tagline{font-size:10.5px;letter-spacing:.12em}
+    .tabs{margin-bottom:18px}
+    .tab{padding:11px 14px;font-size:13.5px}
+    .tab-num{width:19px;height:19px;font-size:10px}
+    .section{padding:16px;border-radius:10px}
+    .section + .section{margin-top:14px}
+    .section-title{font-size:16px;margin-bottom:12px}
+    .field-row,.field-row-3{grid-template-columns:1fr}
+    .input,.select,.textarea,.number{font-size:16px;padding:11px 12px}
+    /* 16px font size on inputs prevents iOS zoom-on-focus */
+    .seg-btn{padding:10px 8px;font-size:13px}
+    .type-grid{grid-template-columns:repeat(2,1fr)}
+    .type-card{padding:12px 6px 10px}
+    .type-icon{font-size:24px}
+    .type-name{font-size:12.5px}
+    .type-desc{font-size:10px}
+    .check{padding:10px;font-size:14px}
+    .icon-grid{grid-template-columns:repeat(auto-fill,minmax(42px,1fr))}
+    .icon-cell{font-size:20px}
+    .upload-zone{padding:18px 12px}
+    .upload-zone .big{font-size:24px}
+    .btn{padding:11px 16px;font-size:14px}
+    .btn-sm{padding:8px 12px;font-size:12.5px}
+    .action-bar{padding:12px;gap:8px}
+    .action-bar .meta{font-size:12.5px;gap:10px;width:100%;margin-bottom:4px}
+
+    /* Preview area */
+    .preview-area{padding:14px;border-radius:8px}
+    .preview-grid{grid-template-columns:1fr;gap:18px}
+    .preview-card-wrap{padding:10px;transform:none !important}
+
+    /* Draw tool */
+    .draw-main{padding:20px 14px;min-height:auto}
+    .draw-ball{width:180px;height:180px}
+    .draw-ball.has-num{font-size:64px}
+    .draw-ball.has-emoji{font-size:80px}
+    .draw-ball.has-text{font-size:24px}
+    .draw-ball.has-text.long{font-size:18px}
+    .draw-ball.has-text.very-long{font-size:14px}
+    .round-title{font-size:20px}
+    .draw-display{min-height:200px;margin:8px 0 18px}
+    .draw-stats{gap:18px;margin-bottom:14px}
+    .stat-value{font-size:24px}
+    .stat-label{font-size:10px}
+    .btn-draw{padding:13px 28px;font-size:15px}
+    .draw-actions{gap:8px}
+
+    /* Modal */
+    .modal{padding:18px;border-radius:10px}
+    .modal h3{font-size:17px}
+    .modal p{font-size:13.5px}
+
+    /* Disable hover transforms that confuse touch */
+    .preview-card-wrap:hover{transform:none}
+    .type-card:hover{transform:none}
+
+    /* Hide stamp tooltip on mobile */
+    [data-tip]::after{display:none}
+  }
+
+  @media (max-width:420px){
+    .title{font-size:20px}
+    .tagline{display:none}
+    .tab{padding:10px 12px;font-size:13px}
+    .draw-ball{width:160px;height:160px}
+    .draw-ball.has-num{font-size:54px}
+    .draw-ball.has-emoji{font-size:68px}
+    .stat-value{font-size:21px}
+  }
+
+  /* ============================================ */
+  /* PRINT STYLES — A4 LAYOUTS                    */
+  /* ============================================ */
+  @media screen{
+    .print-area{display:none}
+  }
+  @media print{
+    body{background:#fff;padding:0;margin:0}
+    .app, .modal-bg{display:none !important}
+    .print-area{display:block}
+  }
+
+  /* Print page wrappers */
+  .print-page{
+    page-break-after:always;
+    break-after:page;
+    page-break-inside:avoid;
+    break-inside:avoid;
+    box-sizing:border-box;
+  }
+  .print-page:last-child{page-break-after:auto;break-after:auto}
+
+  /* Layout 1: 1 card per A4 portrait */
+  .layout-1 .print-page{
+    width:194mm;height:281mm;
+    display:flex;
+  }
+  .layout-1 .print-page > .bingo-card{flex:1}
+
+  /* Layout 2: 2 cards per A4 landscape */
+  .layout-2 .print-page{
+    width:281mm;height:194mm;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:5mm;
+  }
+
+  /* Layout 4: 4 cards per A4 portrait */
+  .layout-4 .print-page{
+    width:194mm;height:281mm;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:1fr 1fr;
+    gap:5mm;
+  }
+
+  /* ===== BINGO CARD — base ===== */
+  .bingo-card{
+    display:flex;flex-direction:column;
+    background:#fff;color:#000;
+    border:2px solid #000;
+    box-sizing:border-box;
+    font-family:'Noto Sans TC',sans-serif;
+    overflow:hidden;
+    position:relative;
+    container-type:inline-size;
+    padding:3.5cqw 3.5cqw 3cqw;
+  }
+  .bingo-header{
+    border-bottom:2px solid #000;
+    padding-bottom:1.8cqw;
+    margin-bottom:2cqw;
+    flex-shrink:0;
+  }
+
+  /* === Name row: 姓名 ___ No.X (now below title/subtitle) === */
+  .bingo-top-row{
+    display:flex;align-items:center;gap:1.2cqw;
+    margin-top:1.8cqw;
+    font-size:2.7cqw;line-height:1.3;
+    font-family:'Fraunces',serif;font-style:italic;
+    color:#444;
+  }
+  .bingo-top-row.no-name{justify-content:flex-end}
+  .bingo-top-row .name-label{flex-shrink:0;font-style:normal;font-family:'Noto Sans TC',sans-serif}
+  .bingo-top-row .name-line{
+    flex:1;
+    border-bottom:.75px solid #555;
+    height:1.5em;
+  }
+  .bingo-top-row .card-no{
+    flex-shrink:0;font-family:'Fraunces',serif;font-weight:600;
+    color:#222;
+  }
+
+  .bingo-title{
+    text-align:center;
+    font-family:'Noto Serif TC',serif;font-weight:900;
+    letter-spacing:.08em;line-height:1;
+    font-size:8cqw;
+  }
+  .bingo-subtitle{
+    text-align:center;
+    font-family:'Fraunces',serif;font-style:italic;
+    color:#666;margin-top:.8cqw;letter-spacing:.05em;
+    font-size:2.6cqw;
+  }
+  .bingo-grid-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
+  .bingo-grid{
+    flex:1;display:grid;gap:0;
+    border:1.5px solid #000;
+    min-height:0;
+  }
+  .bingo-cell{
+    border:.75px solid #000;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-family:'Noto Serif TC',serif;font-weight:700;
+    overflow:hidden;
+    padding:1cqw;
+    line-height:1.05;
+    background:#fff;
+    min-width:0;min-height:0;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+    hyphens:auto;
+  }
+  .bingo-cell.free{
+    background:#f0f0f0;font-style:italic;
+    background-image:repeating-linear-gradient(45deg, #f0f0f0, #f0f0f0 5px, #e6e6e6 5px, #e6e6e6 10px);
+    white-space:nowrap;
+    letter-spacing:.06em;
+  }
+  .bingo-cell img{
+    max-width:90%;max-height:90%;object-fit:contain;
+  }
+
+  /* cell font sizes — single character (numbers / icons) */
+  .bingo-card.grid-3 .bingo-cell{font-size:14cqw}
+  .bingo-card.grid-4 .bingo-cell{font-size:11cqw}
+  .bingo-card.grid-5 .bingo-cell{font-size:8.5cqw}
+
+  /* === text-cell font sizes — auto-fit by character count === */
+  .bingo-cell.text-cell{font-weight:600}
+
+  /* Grid 5×5 (smallest cells, ~17cqw wide) */
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-1{font-size:9cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-2{font-size:7cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-3{font-size:5cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-4{font-size:3.9cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-5{font-size:3.2cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-long{font-size:2.6cqw}
+
+  /* Grid 4×4 (~22cqw cells) */
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-1{font-size:11cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-2{font-size:9cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-3{font-size:7cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-4{font-size:5.2cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-5{font-size:4.3cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-long{font-size:3.5cqw}
+
+  /* Grid 3×3 (~30cqw cells) */
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-1{font-size:14cqw}
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-2{font-size:11cqw}
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-3{font-size:8.5cqw}
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-4{font-size:6.7cqw}
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-5{font-size:5.5cqw}
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-long{font-size:4.5cqw}
+
+  /* FREE cell — sized down so 4 latin chars fit on one line */
+  .bingo-card.grid-3 .bingo-cell.free{font-size:8.5cqw}
+  .bingo-card.grid-4 .bingo-cell.free{font-size:6.5cqw}
+  .bingo-card.grid-5 .bingo-cell.free{font-size:5cqw}
+
+  /* corner stamp — disabled */
+  .bingo-stamp{display:none}
+
+  /* ===== SCREEN PREVIEW — card sizing (in #preview-area) ===== */
+  #preview-area .bingo-card{width:100%}
+  #preview-area .bingo-card.preview-1{aspect-ratio:194/281}
+  #preview-area .bingo-card.preview-2{aspect-ratio:135/190}
+  #preview-area .bingo-card.preview-4{aspect-ratio:92/130}
+
+  /* ============= PRINT AREA (PDF / 列印 用) ============= */
+  /* Override cqw with absolute sizes so html2canvas renders consistently. */
+  #print-area .bingo-card{padding:4mm 4mm 3mm}
+  #print-area .bingo-header{padding-bottom:2mm;margin-bottom:2.5mm}
+  #print-area .bingo-cell{padding:1.5mm}
+  #print-area .bingo-top-row{margin-top:2mm;gap:1.5mm}
+  #print-area .bingo-top-row .name-line{height:5mm}
+  #print-area .bingo-subtitle{margin-top:1mm}
+
+  /* Layout 1 — 1 card / A4 portrait */
+  #print-area .bingo-card.preview-1 .bingo-title{font-size:26pt}
+  #print-area .bingo-card.preview-1 .bingo-subtitle{font-size:9pt}
+  #print-area .bingo-card.preview-1 .bingo-top-row{font-size:11pt}
+  #print-area .bingo-card.preview-1 .bingo-top-row .name-line{height:7mm}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell{font-size:50pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell{font-size:38pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell{font-size:30pt}
+  /* 1-up text-cell by length */
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-1{font-size:50pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-2{font-size:40pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-3{font-size:30pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-4{font-size:23pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-5{font-size:18pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-long{font-size:14pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-1{font-size:38pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-2{font-size:30pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-3{font-size:24pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-4{font-size:18pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-5{font-size:14pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-long{font-size:11pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-1{font-size:30pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-2{font-size:24pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-3{font-size:18pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-4{font-size:14pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-5{font-size:11pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-long{font-size:9pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.free{font-size:28pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.free{font-size:22pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.free{font-size:17pt}
+
+  /* Layout 2 — 2 cards / A4 landscape */
+  #print-area .bingo-card.preview-2 .bingo-title{font-size:18pt}
+  #print-area .bingo-card.preview-2 .bingo-subtitle{font-size:7pt}
+  #print-area .bingo-card.preview-2 .bingo-top-row{font-size:8.5pt}
+  #print-area .bingo-card.preview-2 .bingo-top-row .name-line{height:5mm}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell{font-size:34pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell{font-size:26pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell{font-size:20pt}
+  /* 2-up text-cell by length */
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-1{font-size:34pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-2{font-size:27pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-3{font-size:21pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-4{font-size:16pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-5{font-size:13pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-long{font-size:10pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-1{font-size:26pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-2{font-size:21pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-3{font-size:16pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-4{font-size:12pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-5{font-size:10pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-long{font-size:8pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-1{font-size:20pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-2{font-size:16pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-3{font-size:12pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-4{font-size:9pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-5{font-size:7.5pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-long{font-size:6pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.free{font-size:20pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.free{font-size:15pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.free{font-size:11pt}
+
+  /* Layout 4 — 4 cards / A4 portrait */
+  #print-area .bingo-card.preview-4{padding:2.5mm 2.5mm 2mm}
+  #print-area .bingo-card.preview-4 .bingo-title{font-size:13pt}
+  #print-area .bingo-card.preview-4 .bingo-subtitle{font-size:6pt}
+  #print-area .bingo-card.preview-4 .bingo-top-row{font-size:6.5pt;margin-top:1.5mm}
+  #print-area .bingo-card.preview-4 .bingo-top-row .name-line{height:3.2mm}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell{font-size:22pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell{font-size:17pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell{font-size:13pt}
+  /* 4-up text-cell by length */
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-1{font-size:22pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-2{font-size:18pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-3{font-size:14pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-4{font-size:11pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-5{font-size:9pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-long{font-size:7pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-1{font-size:17pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-2{font-size:14pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-3{font-size:11pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-4{font-size:8pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-5{font-size:7pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-long{font-size:5.5pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-1{font-size:13pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-2{font-size:11pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-3{font-size:8.5pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-4{font-size:6.5pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-5{font-size:5.5pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-long{font-size:4.5pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.free{font-size:13pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.free{font-size:10pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.free{font-size:7pt}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo">B</div>
+      <div>
+        <h1 class="title">賓果紙本生成器<em>Bingo Studio</em></h1>
+        <div class="tagline">For teachers · For play · For everyone</div>
+      </div>
+    </div>
+    <div class="row" style="gap:8px;">
+      <button class="btn btn-ghost btn-sm" id="btn-reset" data-tip="清空所有設定">↺ 重設</button>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="setup"><span class="tab-num">1</span>設定</button>
+    <button class="tab" data-tab="preview"><span class="tab-num">2</span>預覽 · 列印</button>
+    <button class="tab" data-tab="draw"><span class="tab-num">3</span>抽籤器</button>
+  </nav>
+
+  <!-- ============ SETUP PANEL ============ -->
+  <section class="panel active" id="panel-setup">
+    <div class="settings-grid">
+      <!-- LEFT: type & layout -->
+      <div>
+        <div class="section">
+          <div class="section-title">選擇賓果類型<span class="num">i.</span></div>
+          <div class="type-grid" id="type-grid">
+            <div class="type-card active" data-type="number">
+              <div class="type-icon">7</div>
+              <div class="type-name">數字賓果</div>
+              <div class="type-desc">經典玩法 · 自訂範圍</div>
+            </div>
+            <div class="type-card" data-type="icon">
+              <div class="type-icon">🎲</div>
+              <div class="type-name">圖示賓果</div>
+              <div class="type-desc">挑選喜愛圖案</div>
+            </div>
+            <div class="type-card" data-type="adj">
+              <div class="type-icon">✨</div>
+              <div class="type-name">形容詞賓果</div>
+              <div class="type-desc">語言遊戲 · 中文</div>
+            </div>
+            <div class="type-card" data-type="text">
+              <div class="type-icon">✏️</div>
+              <div class="type-name">自訂文字</div>
+              <div class="type-desc">輸入任意內容</div>
+            </div>
+            <div class="type-card" data-type="image">
+              <div class="type-icon">🖼</div>
+              <div class="type-name">自訂圖片</div>
+              <div class="type-desc">上傳您的圖案</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">紙張與排版<span class="num">ii.</span></div>
+
+          <div class="field">
+            <label class="label">格子尺寸</label>
+            <div class="seg">
+              <button class="seg-btn" data-grid="3">3 × 3</button>
+              <button class="seg-btn" data-grid="4">4 × 4</button>
+              <button class="seg-btn active" data-grid="5">5 × 5</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">每張 A4 印幾份</label>
+            <div class="seg">
+              <button class="seg-btn active" data-layout="1">1 份 · 直式</button>
+              <button class="seg-btn" data-layout="2">2 份 · 橫式</button>
+              <button class="seg-btn" data-layout="4">4 份 · 直式</button>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="label">A4 張數</label>
+              <input type="number" class="number" id="page-count" value="5" min="1" max="100">
+            </div>
+            <div class="field">
+              <label class="label">總卡數</label>
+              <input type="text" class="input" id="total-cards" value="5 張" readonly style="background:var(--paper-2);color:var(--ink-soft)">
+            </div>
+          </div>
+
+          <div class="field" id="title-field">
+            <label class="label">卡片標題</label>
+            <input type="text" class="input" id="card-title" value="BINGO" maxlength="20">
+          </div>
+
+          <div class="field-row" id="grid5-options">
+            <label class="check">
+              <input type="checkbox" id="opt-free">
+              <span>5×5 中央免費格(FREE)</span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="check">
+              <input type="checkbox" id="opt-name-line" checked>
+              <span>顯示姓名欄位(於卡片上方)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: content -->
+      <div>
+        <div class="section">
+          <div class="section-title" id="content-title">內容設定<span class="num">iii.</span></div>
+
+          <!-- NUMBER -->
+          <div class="content-block" id="block-number">
+            <div class="section-desc">經典數字賓果。建議數字總數至少為格子數量的 2~3 倍,讓每張卡片組合更多元。</div>
+            <div class="field-row">
+              <div class="field">
+                <label class="label">數字最小值</label>
+                <input type="number" class="number" id="num-min" value="1">
+              </div>
+              <div class="field">
+                <label class="label">數字最大值</label>
+                <input type="number" class="number" id="num-max" value="30">
+              </div>
+            </div>
+            <div class="help-text" id="num-help"></div>
+          </div>
+
+          <!-- ICON -->
+          <div class="content-block hidden" id="block-icon">
+            <div class="section-desc">從圖庫挑選圖示。已選圖示會均勻隨機散布在各張卡片上。</div>
+            <div class="cat-tabs" id="icon-cats"></div>
+            <div class="picker-toolbar">
+              <span id="icon-selected-count">已選 0 個</span>
+              <div class="row" style="gap:6px">
+                <button class="btn btn-ghost btn-sm" id="icon-select-all">全選此分類</button>
+                <button class="btn btn-ghost btn-sm" id="icon-clear">清空</button>
+              </div>
+            </div>
+            <div class="icon-grid" id="icon-grid"></div>
+          </div>
+
+          <!-- ADJECTIVE -->
+          <div class="content-block hidden" id="block-adj">
+            <div class="section-desc">內建中文形容詞庫。點擊新增到您的賓果池;也可自行輸入新詞。</div>
+            <div class="cat-tabs" id="adj-cats"></div>
+            <div class="picker-toolbar">
+              <span id="adj-selected-count">已選 0 個</span>
+              <div class="row" style="gap:6px">
+                <button class="btn btn-ghost btn-sm" id="adj-select-all">全選此分類</button>
+                <button class="btn btn-ghost btn-sm" id="adj-clear">清空</button>
+              </div>
+            </div>
+            <div class="chips" id="adj-chips"></div>
+            <div class="field" style="margin-top:12px">
+              <label class="label">補充自訂詞(以逗號或換行分隔)</label>
+              <textarea class="textarea" id="adj-custom" placeholder="例:好奇的, 細心的, 隨和的"></textarea>
+            </div>
+          </div>
+
+          <!-- TEXT -->
+          <div class="content-block hidden" id="block-text">
+            <div class="section-desc">輸入任意文字片語。可用<strong>換行</strong>、<strong>半形逗號 ,</strong> 、<strong>全形逗號 ,</strong> 、<strong>頓號 、</strong> 或<strong>分號</strong>分隔,系統會自動辨識。</div>
+            <div class="field">
+              <label class="label">您的內容</label>
+              <textarea class="textarea" id="text-list" rows="10" placeholder="貓
+狗
+兔子
+鯨魚
+
+或:蘋果, 香蕉, 西瓜, 草莓
+也可:紅、橙、黃、綠、藍"></textarea>
+            </div>
+            <div class="help-text" id="text-help">尚未輸入</div>
+          </div>
+
+          <!-- IMAGE -->
+          <div class="content-block hidden" id="block-image">
+            <div class="section-desc">上傳圖片(JPG / PNG / GIF / SVG)。建議尺寸接近正方形;每張會被等比例縮放置入格子。</div>
+            <input type="file" id="image-upload" accept="image/*" multiple style="display:none">
+            <div class="upload-zone" id="upload-zone">
+              <div class="big">📤</div>
+              <div>點此選擇圖片,或拖曳到這裡</div>
+              <div class="small">支援多選 · 單張 ≤ 2MB</div>
+            </div>
+            <div class="image-list" id="image-list"></div>
+            <div class="help-text" id="image-help">已上傳 0 張</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIG ACTION -->
+    <div style="margin-top:24px;text-align:center">
+      <button class="btn btn-primary" id="btn-generate" style="padding:14px 36px;font-size:15px">
+        ✦ 產生賓果卡 →
+      </button>
+      <div class="text-muted" style="margin-top:8px">產生後可至「預覽 · 列印」分頁查看</div>
+    </div>
+  </section>
+
+  <!-- ============ PREVIEW PANEL ============ -->
+  <section class="panel" id="panel-preview">
+    <div class="action-bar">
+      <div class="meta" id="preview-meta">
+        <span>未產生</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="btn-regenerate">↻ 重新洗牌</button>
+      <button class="btn btn-ghost btn-sm" id="btn-print">🖨 列印</button>
+      <button class="btn btn-dark" id="btn-download-pdf">📥 下載 PDF</button>
+    </div>
+    <div class="preview-area" id="preview-area">
+      <div class="empty-state">
+        <div class="big">🎫</div>
+        <h3>還沒有賓果卡</h3>
+        <p>請先到「設定」分頁,選擇賓果類型與內容後,點擊「產生賓果卡」按鈕。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DRAW PANEL ============ -->
+  <section class="panel" id="panel-draw">
+    <div class="draw-layout">
+      <div class="draw-main">
+        <div class="round-name-display" id="round-name-display">— round one —</div>
+        <div class="round-title" id="round-title">第 1 回合</div>
+
+        <div class="draw-display">
+          <div class="draw-ball empty" id="draw-ball">點擊下方按鈕<br>開始抽籤</div>
+        </div>
+
+        <div class="draw-stats">
+          <div class="stat">
+            <div class="stat-value accent" id="stat-drawn">0</div>
+            <div class="stat-label">已抽</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="stat-remaining">0</div>
+            <div class="stat-label">剩餘</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-label">總計</div>
+          </div>
+        </div>
+
+        <div class="draw-actions">
+          <button class="btn-draw" id="btn-draw">🎲 抽下一個</button>
+          <button class="btn btn-ghost" id="btn-undo" data-tip="取消最後一次">↶ 上一步</button>
+          <button class="btn btn-ghost" id="btn-clear-round" data-tip="清空當前回合">清空</button>
+        </div>
+      </div>
+
+      <div class="draw-side">
+        <div class="side-card">
+          <h4>本回合紀錄 <span class="count" id="round-count">0 / 0</span></h4>
+          <div class="history-list" id="history-list"></div>
+        </div>
+
+        <div class="side-card">
+          <h4>回合管理 <span class="count" id="rounds-count">0 場</span></h4>
+          <div class="rounds-list" id="rounds-list"></div>
+          <button class="add-round" id="btn-new-round">+ 新增回合</button>
+        </div>
+
+        <div class="side-card">
+          <h4>匯出</h4>
+          <button class="btn btn-ghost btn-sm" id="btn-export-history" style="width:100%">📋 複製本回合紀錄</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">標題</h3>
+    <p id="modal-msg">訊息</p>
+    <div id="modal-input-wrap" class="hidden">
+      <input type="text" class="input" id="modal-input">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="modal-cancel">取消</button>
+      <button class="btn btn-primary btn-sm" id="modal-ok">確定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PRINT AREA ============ -->
+<div class="print-area" id="print-area"></div>
+
+<script>
+/* ============================================================
+   STATE
+============================================================ */
+const ICON_LIB = {
+  '動物 Animals': ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🦆','🦉','🦅','🦋','🐝','🐞','🐢','🐍','🦄','🐳','🐬','🐠','🦀','🐙','🦒','🦓','🐘','🦘'],
+  '食物 Food': ['🍎','🍌','🍇','🍓','🍑','🍒','🥑','🍅','🥕','🌽','🥦','🍞','🧀','🍕','🍔','🌭','🍟','🍣','🍰','🍩','🍪','🍦','🍫','🍭','🍿','🥨','🥐','🍳','🥞','🍜','🍲','🥗','🥟','🍱','🍙','🍡'],
+  '自然 Nature': ['🌸','🌻','🌹','🌷','🌳','🌵','🌊','🌈','⭐','🌙','☀️','❄️','🔥','🍀','🌿','🌺','🌼','🌴','🌎','🌷','🌾','🍂','🍃','💧','⛰','🏔','🌋','🏖','🌅','🌄','⚡','🌠'],
+  '物品 Objects': ['⚽','🎈','🎁','🎨','🎭','🎪','🎲','🎮','🎸','🎺','🚗','🚲','✈️','🚀','🏠','🎂','📚','✏️','🔑','🎯','🎻','🎷','🥁','📷','📞','💻','⌚','💡','🔔','🛎','🔮','🧸','🎀','🎏','🪁','🎤'],
+  '運動 Sports': ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','⛳','🏹','🎣','🥊','🥋','🛹','🛼','🏂','⛷','🏄','🚴','🏃','🧗','🏇'],
+  '符號 Symbols': ['❤️','💛','💚','💙','💜','🤍','🖤','🤎','💖','💗','💞','💕','💘','✨','🌟','💫','🔥','💧','🎵','🎶','🏆','🏅','🎖','💎','⚡','🌀','♠️','♥️','♦️','♣️','✅','❌','⭕','❓','❗']
+};
+
+const ADJ_LIB = {
+  '情緒': ['快樂','開心','興奮','悲傷','生氣','害怕','緊張','驚訝','放鬆','滿足','期待','失望','感動','溫暖','孤單','驕傲','慚愧','寧靜'],
+  '個性': ['勇敢','害羞','聰明','機靈','勤勞','懶惰','誠實','善良','活潑','安靜','外向','內向','樂觀','悲觀','熱情','冷靜','慷慨','謙虛','幽默','認真','自信','謹慎','好奇','耐心'],
+  '外型': ['高大','矮小','瘦弱','強壯','可愛','英俊','美麗','優雅','華麗','樸素','整潔','圓潤','纖細','蓬鬆'],
+  '能力': ['厲害','靈巧','敏捷','迅速','緩慢','流暢','專業','創意','專注','獨立','負責','可靠','細心','穩重'],
+  '感官': ['涼爽','柔軟','堅硬','光滑','粗糙','明亮','昏暗','吵鬧','香甜','酸澀','清新','濃郁','芬芳','刺鼻'],
+  '其他': ['新鮮','陳舊','嶄新','古老','奇特','普通','神秘','危險','安全','實用','有趣','無聊','重要','美好','珍貴','獨特','驚奇','特別']
+};
+
+const state = {
+  type: 'number',
+  gridSize: 5,
+  layout: '1',
+  pageCount: 5,
+  cardTitle: 'BINGO',
+  freeCenter: false,
+  nameLine: true,
+  // type-specific
+  numMin: 1,
+  numMax: 30,
+  selectedIcons: new Set(),
+  iconCat: '動物 Animals',
+  selectedAdj: new Set(),
+  adjCat: '情緒',
+  customText: '',
+  images: [], // {id, src, name}
+  // generated
+  cards: [],   // [{ id, cells: [...], gridSize }]
+  // drawing
+  rounds: [],  // [{ id, name, drawn: [], pool: [...] }]
+  currentRoundId: null
+};
+
+let imageCounter = 0;
+let roundCounter = 0;
+
+/* ============================================================
+   UTILS
+============================================================ */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function uid(){return Math.random().toString(36).slice(2,9)}
+function el(sel){return document.querySelector(sel)}
+function els(sel){return document.querySelectorAll(sel)}
+
+function showModal({title,msg,input=false,defaultValue='',onOk}){
+  el('#modal-title').textContent = title;
+  el('#modal-msg').textContent = msg;
+  el('#modal-input-wrap').classList.toggle('hidden', !input);
+  el('#modal-input').value = defaultValue;
+  el('#modal').classList.add('show');
+  if(input) setTimeout(()=>el('#modal-input').focus(), 50);
+  el('#modal-ok').onclick = ()=>{
+    const v = input ? el('#modal-input').value : true;
+    el('#modal').classList.remove('show');
+    if(onOk) onOk(v);
+  };
+}
+el('#modal-cancel').onclick = ()=>el('#modal').classList.remove('show');
+el('#modal').onclick = e=>{if(e.target.id==='modal') el('#modal').classList.remove('show')};
+
+/* ============================================================
+   TABS
+============================================================ */
+els('.tab').forEach(t=>{
+  t.onclick = ()=>{
+    els('.tab').forEach(x=>x.classList.remove('active'));
+    els('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    el('#panel-' + t.dataset.tab).classList.add('active');
+  };
+});
+
+/* ============================================================
+   SETUP UI BINDINGS
+============================================================ */
+// type cards
+els('.type-card').forEach(c=>{
+  c.onclick = ()=>{
+    els('.type-card').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    state.type = c.dataset.type;
+    showContentBlock();
+    updateMeta();
+  };
+});
+
+function showContentBlock(){
+  els('.content-block').forEach(b=>b.classList.add('hidden'));
+  const map = {number:'block-number',icon:'block-icon',adj:'block-adj',text:'block-text',image:'block-image'};
+  el('#'+map[state.type]).classList.remove('hidden');
+  // titles
+  const titleMap = {
+    number:'數字內容',
+    icon:'圖示內容',
+    adj:'形容詞內容',
+    text:'文字內容',
+    image:'圖片內容'
+  };
+  el('#content-title').innerHTML = titleMap[state.type] + '<span class="num">iii.</span>';
+}
+
+// segmented controls
+els('[data-grid]').forEach(b=>{
+  b.onclick = ()=>{
+    els('[data-grid]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    state.gridSize = parseInt(b.dataset.grid);
+    el('#grid5-options').style.display = state.gridSize === 5 ? 'grid' : 'none';
+    updateMeta();
+  };
+});
+els('[data-layout]').forEach(b=>{
+  b.onclick = ()=>{
+    els('[data-layout]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    state.layout = b.dataset.layout;
+    updateMeta();
+  };
+});
+
+// number inputs
+el('#page-count').oninput = e=>{
+  state.pageCount = Math.max(1, Math.min(100, parseInt(e.target.value)||1));
+  updateMeta();
+};
+el('#card-title').oninput = e=>{state.cardTitle = e.target.value || 'BINGO'};
+el('#opt-free').onchange = e=>{state.freeCenter = e.target.checked};
+el('#opt-name-line').onchange = e=>{state.nameLine = e.target.checked};
+el('#num-min').oninput = e=>{state.numMin = parseInt(e.target.value)||1; updateNumHelp()};
+el('#num-max').oninput = e=>{state.numMax = parseInt(e.target.value)||30; updateNumHelp()};
+
+function updateMeta(){
+  const total = state.pageCount * parseInt(state.layout);
+  el('#total-cards').value = total + ' 張';
+}
+updateMeta();
+
+function updateNumHelp(){
+  const n = Math.max(0, state.numMax - state.numMin + 1);
+  const need = state.gridSize * state.gridSize - (state.gridSize===5 && state.freeCenter ? 1 : 0);
+  el('#num-help').textContent = `共 ${n} 個數字。本格子尺寸需要 ${need} 個` + (n < need ? ' ⚠ 數量不足' : '');
+}
+updateNumHelp();
+
+/* ============================================================
+   ICON PICKER
+============================================================ */
+function renderIconCats(){
+  el('#icon-cats').innerHTML = '';
+  Object.keys(ICON_LIB).forEach(cat=>{
+    const b = document.createElement('button');
+    b.className = 'cat-tab' + (cat === state.iconCat ? ' active' : '');
+    b.textContent = cat;
+    b.onclick = ()=>{state.iconCat = cat; renderIconCats(); renderIcons()};
+    el('#icon-cats').appendChild(b);
+  });
+}
+function renderIcons(){
+  const grid = el('#icon-grid');
+  grid.innerHTML = '';
+  ICON_LIB[state.iconCat].forEach(emoji=>{
+    const c = document.createElement('div');
+    c.className = 'icon-cell' + (state.selectedIcons.has(emoji) ? ' selected' : '');
+    c.textContent = emoji;
+    c.onclick = ()=>{
+      if(state.selectedIcons.has(emoji)) state.selectedIcons.delete(emoji);
+      else state.selectedIcons.add(emoji);
+      renderIcons();
+      el('#icon-selected-count').textContent = `已選 ${state.selectedIcons.size} 個`;
+    };
+    grid.appendChild(c);
+  });
+  el('#icon-selected-count').textContent = `已選 ${state.selectedIcons.size} 個`;
+}
+el('#icon-select-all').onclick = ()=>{
+  ICON_LIB[state.iconCat].forEach(e=>state.selectedIcons.add(e));
+  renderIcons();
+};
+el('#icon-clear').onclick = ()=>{
+  state.selectedIcons.clear();
+  renderIcons();
+};
+renderIconCats();
+renderIcons();
+
+/* ============================================================
+   ADJECTIVE PICKER
+============================================================ */
+function renderAdjCats(){
+  el('#adj-cats').innerHTML = '';
+  Object.keys(ADJ_LIB).forEach(cat=>{
+    const b = document.createElement('button');
+    b.className = 'cat-tab' + (cat === state.adjCat ? ' active' : '');
+    b.textContent = cat;
+    b.onclick = ()=>{state.adjCat = cat; renderAdjCats(); renderAdjs()};
+    el('#adj-cats').appendChild(b);
+  });
+}
+function renderAdjs(){
+  const wrap = el('#adj-chips');
+  wrap.innerHTML = '';
+  ADJ_LIB[state.adjCat].forEach(w=>{
+    const c = document.createElement('div');
+    c.className = 'chip' + (state.selectedAdj.has(w) ? ' selected' : '');
+    c.textContent = w;
+    c.onclick = ()=>{
+      if(state.selectedAdj.has(w)) state.selectedAdj.delete(w);
+      else state.selectedAdj.add(w);
+      renderAdjs();
+      el('#adj-selected-count').textContent = `已選 ${state.selectedAdj.size} 個`;
+    };
+    wrap.appendChild(c);
+  });
+  el('#adj-selected-count').textContent = `已選 ${state.selectedAdj.size} 個`;
+}
+el('#adj-select-all').onclick = ()=>{
+  ADJ_LIB[state.adjCat].forEach(w=>state.selectedAdj.add(w));
+  renderAdjs();
+};
+el('#adj-clear').onclick = ()=>{
+  state.selectedAdj.clear();
+  renderAdjs();
+};
+el('#adj-custom').oninput = ()=>{
+  const customN = parseTextItems(el('#adj-custom').value).length;
+  el('#adj-selected-count').textContent = `已選 ${state.selectedAdj.size} 個` + (customN ? ` + 自訂 ${customN} 個` : '');
+};
+renderAdjCats();
+renderAdjs();
+
+/* ============================================================
+   TEXT INPUT
+============================================================ */
+el('#text-list').oninput = e=>{
+  state.customText = e.target.value;
+  const n = parseTextItems(e.target.value).length;
+  el('#text-help').textContent = n === 0 ? '尚未輸入' : `共 ${n} 個項目`;
+};
+function parseTextItems(s){
+  // 支援:換行、半形逗號 , 、全形逗號 , 、頓號 、 、半形分號 ; 、全形分號 ;
+  return (s||'').split(/[\n\r,,、;;]+/).map(x=>x.trim()).filter(Boolean);
+}
+
+/* ============================================================
+   IMAGE UPLOAD
+============================================================ */
+el('#upload-zone').onclick = ()=>el('#image-upload').click();
+el('#upload-zone').ondragover = e=>{e.preventDefault();el('#upload-zone').style.borderColor='var(--accent)'};
+el('#upload-zone').ondragleave = ()=>el('#upload-zone').style.borderColor='';
+el('#upload-zone').ondrop = e=>{
+  e.preventDefault();el('#upload-zone').style.borderColor='';
+  handleFiles(e.dataTransfer.files);
+};
+el('#image-upload').onchange = e=>handleFiles(e.target.files);
+
+function handleFiles(files){
+  Array.from(files).forEach(f=>{
+    if(!f.type.startsWith('image/')) return;
+    if(f.size > 2*1024*1024){
+      alert(`「${f.name}」超過 2MB,已跳過。`); return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      state.images.push({id:'img'+(++imageCounter), src:ev.target.result, name:f.name});
+      renderImages();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+function renderImages(){
+  const wrap = el('#image-list');
+  wrap.innerHTML = '';
+  state.images.forEach((img,i)=>{
+    const it = document.createElement('div');
+    it.className = 'image-item';
+    it.innerHTML = `
+      <img src="${img.src}" alt="">
+      <span class="label-num">${i+1}</span>
+      <button class="remove" data-id="${img.id}">×</button>
+    `;
+    it.querySelector('.remove').onclick = ev=>{
+      ev.stopPropagation();
+      state.images = state.images.filter(x=>x.id !== img.id);
+      renderImages();
+    };
+    wrap.appendChild(it);
+  });
+  el('#image-help').textContent = `已上傳 ${state.images.length} 張`;
+}
+
+/* ============================================================
+   GET POOL ITEMS BY TYPE
+============================================================ */
+function getPool(){
+  if(state.type === 'number'){
+    const items = [];
+    for(let i=state.numMin; i<=state.numMax; i++) items.push(i);
+    return items.map(n=>({type:'num', value:n, display:String(n)}));
+  }
+  if(state.type === 'icon'){
+    return [...state.selectedIcons].map(e=>({type:'icon', value:e, display:e}));
+  }
+  if(state.type === 'adj'){
+    const set = new Set([...state.selectedAdj]);
+    parseTextItems(el('#adj-custom').value).forEach(w=>set.add(w));
+    return [...set].map(w=>({type:'text', value:w, display:w}));
+  }
+  if(state.type === 'text'){
+    return parseTextItems(state.customText).map(w=>({type:'text', value:w, display:w}));
+  }
+  if(state.type === 'image'){
+    return state.images.map((img,i)=>({type:'image', value:img.id, display:img.src, label:`#${i+1}`}));
+  }
+  return [];
+}
+
+function neededCells(){
+  const total = state.gridSize * state.gridSize;
+  const free = state.gridSize === 5 && state.freeCenter ? 1 : 0;
+  return total - free;
+}
+
+/* ============================================================
+   GENERATE CARDS
+============================================================ */
+el('#btn-generate').onclick = ()=>{
+  const pool = getPool();
+  const need = neededCells();
+  if(pool.length < need){
+    showModal({
+      title:'內容數量不足',
+      msg:`目前的「${typeName(state.type)}」只有 ${pool.length} 個項目,但 ${state.gridSize}×${state.gridSize} 賓果至少需要 ${need} 個。請增加內容後再試。`,
+      onOk:()=>{}
+    });
+    return;
+  }
+  const total = state.pageCount * parseInt(state.layout);
+  state.cards = [];
+  for(let i=0;i<total;i++){
+    const picked = shuffle(pool).slice(0, need);
+    // build cells with optional FREE center
+    let cells = picked.slice();
+    if(state.gridSize === 5 && state.freeCenter){
+      cells.splice(12, 0, {type:'free', value:'FREE', display:'FREE'});
+    }
+    state.cards.push({id:uid(), cells, snapshot:{
+      gridSize: state.gridSize,
+      layout: state.layout,
+      title: state.cardTitle,
+      nameLine: state.nameLine,
+      type: state.type
+    }});
+  }
+  renderPreview();
+  buildPrintArea();
+  // initialize a draw round if none
+  if(state.rounds.length === 0) newRound(true);
+  else syncCurrentRoundPool();
+  // jump to preview tab
+  els('.tab').forEach(x=>x.classList.remove('active'));
+  els('.panel').forEach(x=>x.classList.remove('active'));
+  el('[data-tab="preview"]').classList.add('active');
+  el('#panel-preview').classList.add('active');
+};
+
+function typeName(t){
+  return {number:'數字',icon:'圖示',adj:'形容詞',text:'文字',image:'圖片'}[t] || t;
+}
+
+el('#btn-regenerate').onclick = ()=>{
+  if(state.cards.length === 0) return;
+  el('#btn-generate').click();
+};
+
+/* ============================================================
+   RENDER PREVIEW
+============================================================ */
+function renderPreview(){
+  const area = el('#preview-area');
+  if(state.cards.length === 0){
+    area.innerHTML = `<div class="empty-state"><div class="big">🎫</div><h3>還沒有賓果卡</h3><p>請先到「設定」分頁產生賓果卡。</p></div>`;
+    el('#preview-meta').innerHTML = '<span>未產生</span>';
+    return;
+  }
+  el('#preview-meta').innerHTML = `
+    <span>類型 · <strong>${typeName(state.type)}</strong></span>
+    <span>尺寸 · <strong>${state.gridSize}×${state.gridSize}</strong></span>
+    <span>排版 · <strong>${state.layout} 份/A4</strong></span>
+    <span>總計 · <strong>${state.cards.length} 張</strong></span>
+    <span>A4 紙 · <strong>${state.pageCount} 張</strong></span>
+  `;
+  area.innerHTML = '<div class="preview-grid"></div>';
+  const grid = area.querySelector('.preview-grid');
+  state.cards.forEach((card,i)=>{
+    const w = document.createElement('div');
+    w.className = 'preview-card-wrap';
+    w.innerHTML = renderCardHTML(card, i+1, 'preview-' + state.layout);
+    const lbl = document.createElement('div');
+    lbl.className = 'preview-label';
+    lbl.textContent = `card ${i+1} of ${state.cards.length}`;
+    w.appendChild(lbl);
+    grid.appendChild(w);
+  });
+}
+
+function renderCardHTML(card, num, sizeClass){
+  const snap = card.snapshot;
+  const gridCss = `grid-template-columns:repeat(${snap.gridSize},1fr);grid-template-rows:repeat(${snap.gridSize},1fr)`;
+
+  const topRowHTML = snap.nameLine
+    ? `<div class="bingo-top-row">
+         <span class="name-label">姓名</span>
+         <span class="name-line"></span>
+         <span class="card-no">No.${num}</span>
+       </div>`
+    : `<div class="bingo-top-row no-name">
+         <span class="card-no">No.${num}</span>
+       </div>`;
+
+  const headerHTML = `
+    <div class="bingo-header">
+      <div class="bingo-title">${escapeHTML(snap.title)}</div>
+      <div class="bingo-subtitle">${snap.gridSize}×${snap.gridSize} · ${typeName(snap.type)}</div>
+      ${topRowHTML}
+    </div>`;
+
+  const cellsHTML = card.cells.map(c=>{
+    if(c.type === 'free') return `<div class="bingo-cell free">FREE</div>`;
+    if(c.type === 'image') return `<div class="bingo-cell"><img src="${c.display}" alt=""></div>`;
+    if(c.type === 'text'){
+      const len = [...String(c.display)].length;
+      const lenClass = len <= 1 ? 'len-1' : len === 2 ? 'len-2' : len === 3 ? 'len-3'
+                     : len === 4 ? 'len-4' : len === 5 ? 'len-5' : 'len-long';
+      return `<div class="bingo-cell text-cell ${lenClass}">${escapeHTML(c.display)}</div>`;
+    }
+    if(c.type === 'icon') return `<div class="bingo-cell">${c.display}</div>`;
+    return `<div class="bingo-cell">${escapeHTML(c.display)}</div>`;
+  }).join('');
+
+  return `<div class="bingo-card ${sizeClass} grid-${snap.gridSize}">
+    ${headerHTML}
+    <div class="bingo-grid-wrap">
+      <div class="bingo-grid" style="${gridCss}">${cellsHTML}</div>
+    </div>
+  </div>`;
+}
+
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+/* ============================================================
+   BUILD PRINT AREA
+============================================================ */
+function buildPrintArea(){
+  const layout = state.layout;
+  const orientation = layout === '2' ? 'landscape' : 'portrait';
+  el('#dynamic-print-style').textContent = `@page { size: A4 ${orientation}; margin: 8mm; }`;
+
+  const area = el('#print-area');
+  area.className = 'print-area layout-' + layout;
+  area.innerHTML = '';
+
+  const perPage = parseInt(layout);
+  const sizeClass = 'preview-' + layout;
+  let pages = [];
+  for(let i=0;i<state.cards.length;i+=perPage){
+    pages.push(state.cards.slice(i, i+perPage));
+  }
+  pages.forEach(group=>{
+    const page = document.createElement('div');
+    page.className = 'print-page';
+    group.forEach((c,idx)=>{
+      const startNum = state.cards.indexOf(c) + 1;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderCardHTML(c, startNum, sizeClass);
+      page.appendChild(tmp.firstElementChild);
+    });
+    // pad blank cells if last page is partial (4-up only)
+    if(layout === '4' && group.length < 4){
+      for(let i=group.length;i<4;i++){
+        const blank = document.createElement('div');
+        blank.style.cssText = 'border:1px dashed #ccc;border-radius:4px';
+        page.appendChild(blank);
+      }
+    }
+    area.appendChild(page);
+  });
+}
+
+el('#btn-print').onclick = ()=>window.print();
+
+/* ============================================================
+   PDF DOWNLOAD (jsPDF + html2canvas)
+============================================================ */
+const pdfBtn = el('#btn-download-pdf');
+pdfBtn.onclick = downloadPDF;
+
+async function downloadPDF(){
+  if(state.cards.length === 0){
+    showModal({title:'尚未產生卡片', msg:'請先產生賓果卡再下載 PDF。', onOk:()=>{}});
+    return;
+  }
+  if(typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined'){
+    showModal({title:'資源載入中', msg:'PDF 函式庫尚未載入完成,請稍候 1~2 秒再試一次。', onOk:()=>{}});
+    return;
+  }
+
+  const originalText = pdfBtn.innerHTML;
+  pdfBtn.disabled = true;
+  pdfBtn.innerHTML = '⏳ 產生中…';
+
+  try {
+    // make sure print area is built
+    buildPrintArea();
+    const printArea = el('#print-area');
+
+    // make print area renderable (off-screen but laid out)
+    const prevCss = printArea.style.cssText;
+    printArea.style.cssText = 'display:block !important; position:fixed; left:-10000px; top:0; background:#fff;';
+
+    const orientation = state.layout === '2' ? 'landscape' : 'portrait';
+    const pageW = orientation === 'landscape' ? 297 : 210;
+    const pageH = orientation === 'landscape' ? 210 : 297;
+    const margin = 8;
+    const contentW = pageW - margin*2;
+    const contentH = pageH - margin*2;
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({orientation, unit:'mm', format:'a4', compress:true});
+
+    const pages = printArea.querySelectorAll('.print-page');
+    for(let i=0; i<pages.length; i++){
+      pdfBtn.innerHTML = `⏳ 處理第 ${i+1}/${pages.length} 頁`;
+      // wait a tick so the DOM is fully rendered
+      await new Promise(r=>requestAnimationFrame(r));
+
+      const canvas = await html2canvas(pages[i], {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        allowTaint: true
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      if(i > 0) pdf.addPage('a4', orientation);
+      pdf.addImage(imgData, 'JPEG', margin, margin, contentW, contentH);
+    }
+
+    // restore
+    printArea.style.cssText = prevCss;
+
+    const filename = `${state.cardTitle || 'BINGO'}-${state.gridSize}x${state.gridSize}-${state.cards.length}張.pdf`;
+    pdf.save(filename);
+  } catch(err) {
+    console.error(err);
+    showModal({title:'產生失敗', msg:'PDF 產生時發生錯誤,請重試或改用「列印 → 另存為 PDF」。', onOk:()=>{}});
+    el('#print-area').style.cssText = '';
+  } finally {
+    pdfBtn.disabled = false;
+    pdfBtn.innerHTML = originalText;
+  }
+}
+
+/* ============================================================
+   DRAW TOOL
+============================================================ */
+function syncCurrentRoundPool(){
+  const r = currentRound();
+  if(!r) return;
+  // refresh pool from current settings, keeping drawn items if still valid
+  const pool = getPool();
+  if(pool.length === 0) return;
+  const drawnValues = new Set(r.drawn.map(d=>d.value+''));
+  r.pool = pool;
+  // keep drawn items only if still in pool
+  r.drawn = r.drawn.filter(d=>pool.some(p=>String(p.value) === String(d.value)));
+  renderDrawTool();
+}
+
+function newRound(silent){
+  const pool = getPool();
+  if(pool.length === 0 && !silent){
+    showModal({title:'尚無內容', msg:'請先在「設定」分頁設定賓果內容。', onOk:()=>{}});
+    return;
+  }
+  roundCounter++;
+  const r = {
+    id: uid(),
+    name: `第 ${roundCounter} 回合`,
+    drawn: [],
+    pool: pool,
+    createdAt: new Date()
+  };
+  state.rounds.push(r);
+  state.currentRoundId = r.id;
+  renderDrawTool();
+}
+
+function currentRound(){
+  return state.rounds.find(r=>r.id === state.currentRoundId);
+}
+
+el('#btn-new-round').onclick = ()=>newRound();
+
+el('#btn-draw').onclick = ()=>{
+  const r = currentRound();
+  if(!r){newRound();return}
+  const remaining = r.pool.filter(p=>!r.drawn.some(d=>String(d.value) === String(p.value)));
+  if(remaining.length === 0){
+    showModal({title:'已抽完', msg:'所有項目都已抽出。是否要清空本回合重新開始?', onOk:()=>{}});
+    return;
+  }
+  const pick = remaining[Math.floor(Math.random()*remaining.length)];
+  r.drawn.push({...pick, time:new Date()});
+  renderDrawTool(true);
+};
+
+el('#btn-undo').onclick = ()=>{
+  const r = currentRound();
+  if(!r || r.drawn.length === 0) return;
+  r.drawn.pop();
+  renderDrawTool();
+};
+
+el('#btn-clear-round').onclick = ()=>{
+  const r = currentRound();
+  if(!r) return;
+  if(r.drawn.length === 0) return;
+  showModal({
+    title:'清空本回合', msg:`確定要清空「${r.name}」的所有抽籤紀錄嗎?`,
+    onOk:()=>{r.drawn = []; renderDrawTool()}
+  });
+};
+
+el('#btn-export-history').onclick = ()=>{
+  const r = currentRound();
+  if(!r || r.drawn.length === 0){
+    showModal({title:'無紀錄', msg:'本回合尚未開獎。', onOk:()=>{}});
+    return;
+  }
+  const lines = [`# ${r.name}`, `時間:${r.createdAt.toLocaleString('zh-TW')}`, `總計:${r.drawn.length} 個`, ''];
+  r.drawn.forEach((d,i)=>{
+    let v = d.value;
+    if(d.type === 'image') v = `[圖片 #${state.images.findIndex(x=>x.id===d.value)+1}]`;
+    lines.push(`${i+1}. ${v}`);
+  });
+  const text = lines.join('\n');
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>{
+      showModal({title:'已複製', msg:'紀錄已複製到剪貼簿。', onOk:()=>{}});
+    });
+  } else {
+    showModal({title:'紀錄', msg:text.substring(0,300), onOk:()=>{}});
+  }
+};
+
+function renderDrawTool(animate){
+  const r = currentRound();
+  // ball
+  const ball = el('#draw-ball');
+  ball.classList.remove('has-num','has-emoji','has-text','has-image','empty','spin','long','very-long');
+  if(!r){
+    ball.classList.add('empty');
+    ball.innerHTML = '尚未開始<br>點選「新增回合」';
+  } else if(r.drawn.length === 0){
+    ball.classList.add('empty');
+    ball.innerHTML = '點擊下方按鈕<br>開始抽籤';
+  } else {
+    const last = r.drawn[r.drawn.length-1];
+    if(last.type === 'num'){
+      ball.classList.add('has-num');
+      ball.textContent = last.value;
+    } else if(last.type === 'icon'){
+      ball.classList.add('has-emoji');
+      ball.textContent = last.value;
+    } else if(last.type === 'image'){
+      ball.classList.add('has-image');
+      ball.innerHTML = `<img src="${last.display}" alt="">`;
+    } else { // text
+      ball.classList.add('has-text');
+      const len = String(last.value).length;
+      if(len > 8) ball.classList.add('very-long');
+      else if(len > 4) ball.classList.add('long');
+      ball.textContent = last.value;
+    }
+    if(animate){
+      ball.classList.remove('spin');
+      void ball.offsetWidth;
+      ball.classList.add('spin');
+    }
+  }
+
+  // round display
+  el('#round-name-display').textContent = r ? `— ${formatRoundEnglish(r)} —` : '— round —';
+  el('#round-title').textContent = r ? r.name : '尚未建立回合';
+
+  // stats
+  const total = r ? r.pool.length : 0;
+  const drawn = r ? r.drawn.length : 0;
+  el('#stat-drawn').textContent = drawn;
+  el('#stat-remaining').textContent = total - drawn;
+  el('#stat-total').textContent = total;
+  el('#round-count').textContent = `${drawn} / ${total}`;
+
+  // history
+  const hl = el('#history-list');
+  hl.innerHTML = '';
+  if(r){
+    r.drawn.forEach((d,i)=>{
+      const it = document.createElement('div');
+      it.className = 'history-item' + (i === r.drawn.length - 1 ? ' latest' : '');
+      let inner = `<span class="ord">${i+1}</span>`;
+      if(d.type === 'image'){
+        inner += `<img src="${d.display}" alt=""><span>#${state.images.findIndex(x=>x.id===d.value)+1}</span>`;
+      } else {
+        inner += `<span>${escapeHTML(d.value)}</span>`;
+      }
+      it.innerHTML = inner;
+      hl.appendChild(it);
+    });
+  }
+
+  // rounds list
+  const rl = el('#rounds-list');
+  rl.innerHTML = '';
+  state.rounds.forEach(round=>{
+    const it = document.createElement('div');
+    it.className = 'round-item' + (round.id === state.currentRoundId ? ' active' : '');
+    it.innerHTML = `
+      <div>
+        <div class="round-name">${escapeHTML(round.name)}</div>
+        <div class="round-meta">${round.drawn.length} / ${round.pool.length} · ${formatTime(round.createdAt)}</div>
+      </div>
+      <div class="round-actions">
+        <button class="mini-btn" data-act="rename" data-tip="重新命名">✎</button>
+        <button class="mini-btn" data-act="delete" data-tip="刪除">×</button>
+      </div>
+    `;
+    it.onclick = e=>{
+      if(e.target.closest('.mini-btn')) return;
+      state.currentRoundId = round.id;
+      renderDrawTool();
+    };
+    it.querySelector('[data-act="rename"]').onclick = e=>{
+      e.stopPropagation();
+      showModal({
+        title:'重新命名', msg:'請輸入新的回合名稱:', input:true,
+        defaultValue: round.name,
+        onOk:(v)=>{if(v) round.name = v; renderDrawTool();}
+      });
+    };
+    it.querySelector('[data-act="delete"]').onclick = e=>{
+      e.stopPropagation();
+      if(state.rounds.length === 1){
+        showModal({title:'無法刪除', msg:'至少需保留一個回合。', onOk:()=>{}});
+        return;
+      }
+      showModal({
+        title:'刪除回合', msg:`確定要刪除「${round.name}」嗎?`,
+        onOk:()=>{
+          state.rounds = state.rounds.filter(r=>r.id !== round.id);
+          if(state.currentRoundId === round.id){
+            state.currentRoundId = state.rounds[0].id;
+          }
+          renderDrawTool();
+        }
+      });
+    };
+    rl.appendChild(it);
+  });
+  el('#rounds-count').textContent = `${state.rounds.length} 場`;
+
+  // disable draw button if no pool
+  el('#btn-draw').disabled = !r || r.pool.length === 0 || r.drawn.length >= r.pool.length;
+}
+
+function formatTime(d){
+  return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+}
+function formatRoundEnglish(r){
+  const n = state.rounds.indexOf(r) + 1;
+  const words = ['one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen'];
+  return `round ${words[n-1] || n}`;
+}
+
+/* ============================================================
+   RESET
+============================================================ */
+el('#btn-reset').onclick = ()=>{
+  showModal({
+    title:'重設所有設定', msg:'這會清空所有內容、卡片與抽籤紀錄。確定嗎?',
+    onOk:()=>location.reload()
+  });
+};
+
+/* ============================================================
+   INIT
+============================================================ */
+el('#grid5-options').style.display = 'grid';
+showContentBlock();
+renderDrawTool();
+
+</script>
+</body>
+</html>
