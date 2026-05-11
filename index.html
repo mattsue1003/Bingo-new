@@ -306,8 +306,8 @@
   }
   .preview-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-    gap:24px;
+    grid-template-columns:repeat(auto-fit,minmax(420px,1fr));
+    gap:32px;
   }
   .preview-card-wrap{
     background:#fff;padding:14px;border-radius:6px;
@@ -337,6 +337,16 @@
     display:flex;gap:8px;align-items:flex-start;
   }
   .warning::before{content:'⚠';font-size:16px;flex-shrink:0}
+
+  .tip{
+    background:linear-gradient(135deg, #f4e8c8, #fffaf0);
+    border:1px solid #d4a017;
+    color:#5a4310;padding:10px 14px;border-radius:8px;
+    font-size:13px;margin-bottom:14px;line-height:1.55;
+    display:flex;gap:6px;align-items:flex-start;
+  }
+  .tip::before{content:'💡';flex-shrink:0}
+  .tip strong{color:#3d2810;font-weight:700}
 
   /* ============ DRAW TOOL ============ */
   .draw-layout{
@@ -750,37 +760,42 @@
     max-width:90%;max-height:90%;object-fit:contain;
   }
 
-  /* cell font sizes — single character (numbers / icons) */
+  /* cell font sizes — generic (numbers) */
   .bingo-card.grid-3 .bingo-cell{font-size:14cqw}
   .bingo-card.grid-4 .bingo-cell{font-size:11cqw}
   .bingo-card.grid-5 .bingo-cell{font-size:8.5cqw}
+
+  /* === icon cells — emojis 視覺上比同 pt 的文字小,所以加大 === */
+  .bingo-card.grid-3 .bingo-cell.icon-cell{font-size:19cqw}
+  .bingo-card.grid-4 .bingo-cell.icon-cell{font-size:15cqw}
+  .bingo-card.grid-5 .bingo-cell.icon-cell{font-size:11.5cqw}
 
   /* === text-cell font sizes — auto-fit by character count === */
   .bingo-cell.text-cell{font-weight:600}
 
   /* Grid 5×5 (smallest cells, ~17cqw wide) */
-  .bingo-card.grid-5 .bingo-cell.text-cell.len-1{font-size:9cqw}
-  .bingo-card.grid-5 .bingo-cell.text-cell.len-2{font-size:7cqw}
-  .bingo-card.grid-5 .bingo-cell.text-cell.len-3{font-size:5cqw}
-  .bingo-card.grid-5 .bingo-cell.text-cell.len-4{font-size:3.9cqw}
-  .bingo-card.grid-5 .bingo-cell.text-cell.len-5{font-size:3.2cqw}
-  .bingo-card.grid-5 .bingo-cell.text-cell.len-long{font-size:2.6cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-1{font-size:12cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-2{font-size:8cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-3{font-size:5.7cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-4{font-size:4.3cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-5{font-size:3.4cqw}
+  .bingo-card.grid-5 .bingo-cell.text-cell.len-long{font-size:2.8cqw}
 
   /* Grid 4×4 (~22cqw cells) */
-  .bingo-card.grid-4 .bingo-cell.text-cell.len-1{font-size:11cqw}
-  .bingo-card.grid-4 .bingo-cell.text-cell.len-2{font-size:9cqw}
-  .bingo-card.grid-4 .bingo-cell.text-cell.len-3{font-size:7cqw}
-  .bingo-card.grid-4 .bingo-cell.text-cell.len-4{font-size:5.2cqw}
-  .bingo-card.grid-4 .bingo-cell.text-cell.len-5{font-size:4.3cqw}
-  .bingo-card.grid-4 .bingo-cell.text-cell.len-long{font-size:3.5cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-1{font-size:15cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-2{font-size:10.5cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-3{font-size:7.5cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-4{font-size:5.6cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-5{font-size:4.5cqw}
+  .bingo-card.grid-4 .bingo-cell.text-cell.len-long{font-size:3.7cqw}
 
-  /* Grid 3×3 (~30cqw cells) */
-  .bingo-card.grid-3 .bingo-cell.text-cell.len-1{font-size:14cqw}
-  .bingo-card.grid-3 .bingo-cell.text-cell.len-2{font-size:11cqw}
-  .bingo-card.grid-3 .bingo-cell.text-cell.len-3{font-size:8.5cqw}
-  .bingo-card.grid-3 .bingo-cell.text-cell.len-4{font-size:6.7cqw}
-  .bingo-card.grid-3 .bingo-cell.text-cell.len-5{font-size:5.5cqw}
-  .bingo-card.grid-3 .bingo-cell.text-cell.len-long{font-size:4.5cqw}
+  /* Grid 3×3 (~30cqw cells) — 充分利用空間 */
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-1{font-size:22cqw}
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-2{font-size:14cqw}
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-3{font-size:10.5cqw}
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-4{font-size:8cqw}
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-5{font-size:6.5cqw}
+  .bingo-card.grid-3 .bingo-cell.text-cell.len-long{font-size:5cqw}
 
   /* FREE cell — sized down so 4 latin chars fit on one line */
   .bingo-card.grid-3 .bingo-cell.free{font-size:8.5cqw}
@@ -813,25 +828,29 @@
   #print-area .bingo-card.preview-1.grid-3 .bingo-cell{font-size:50pt}
   #print-area .bingo-card.preview-1.grid-4 .bingo-cell{font-size:38pt}
   #print-area .bingo-card.preview-1.grid-5 .bingo-cell{font-size:30pt}
+  /* 1-up icon-cell — bigger */
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.icon-cell{font-size:68pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.icon-cell{font-size:52pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.icon-cell{font-size:40pt}
   /* 1-up text-cell by length */
-  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-1{font-size:50pt}
-  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-2{font-size:40pt}
-  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-3{font-size:30pt}
-  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-4{font-size:23pt}
-  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-5{font-size:18pt}
-  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-long{font-size:14pt}
-  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-1{font-size:38pt}
-  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-2{font-size:30pt}
-  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-3{font-size:24pt}
-  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-4{font-size:18pt}
-  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-5{font-size:14pt}
-  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-long{font-size:11pt}
-  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-1{font-size:30pt}
-  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-2{font-size:24pt}
-  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-3{font-size:18pt}
-  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-4{font-size:14pt}
-  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-5{font-size:11pt}
-  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-long{font-size:9pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-1{font-size:74pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-2{font-size:50pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-3{font-size:38pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-4{font-size:28pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-5{font-size:22pt}
+  #print-area .bingo-card.preview-1.grid-3 .bingo-cell.text-cell.len-long{font-size:17pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-1{font-size:54pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-2{font-size:38pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-3{font-size:28pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-4{font-size:21pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-5{font-size:17pt}
+  #print-area .bingo-card.preview-1.grid-4 .bingo-cell.text-cell.len-long{font-size:13pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-1{font-size:42pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-2{font-size:30pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-3{font-size:21pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-4{font-size:16pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-5{font-size:13pt}
+  #print-area .bingo-card.preview-1.grid-5 .bingo-cell.text-cell.len-long{font-size:10pt}
   #print-area .bingo-card.preview-1.grid-3 .bingo-cell.free{font-size:28pt}
   #print-area .bingo-card.preview-1.grid-4 .bingo-cell.free{font-size:22pt}
   #print-area .bingo-card.preview-1.grid-5 .bingo-cell.free{font-size:17pt}
@@ -844,25 +863,29 @@
   #print-area .bingo-card.preview-2.grid-3 .bingo-cell{font-size:34pt}
   #print-area .bingo-card.preview-2.grid-4 .bingo-cell{font-size:26pt}
   #print-area .bingo-card.preview-2.grid-5 .bingo-cell{font-size:20pt}
+  /* 2-up icon-cell */
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.icon-cell{font-size:46pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.icon-cell{font-size:36pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.icon-cell{font-size:28pt}
   /* 2-up text-cell by length */
-  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-1{font-size:34pt}
-  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-2{font-size:27pt}
-  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-3{font-size:21pt}
-  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-4{font-size:16pt}
-  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-5{font-size:13pt}
-  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-long{font-size:10pt}
-  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-1{font-size:26pt}
-  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-2{font-size:21pt}
-  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-3{font-size:16pt}
-  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-4{font-size:12pt}
-  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-5{font-size:10pt}
-  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-long{font-size:8pt}
-  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-1{font-size:20pt}
-  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-2{font-size:16pt}
-  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-3{font-size:12pt}
-  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-4{font-size:9pt}
-  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-5{font-size:7.5pt}
-  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-long{font-size:6pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-1{font-size:52pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-2{font-size:34pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-3{font-size:25pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-4{font-size:19pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-5{font-size:15pt}
+  #print-area .bingo-card.preview-2.grid-3 .bingo-cell.text-cell.len-long{font-size:12pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-1{font-size:38pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-2{font-size:26pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-3{font-size:19pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-4{font-size:14pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-5{font-size:11pt}
+  #print-area .bingo-card.preview-2.grid-4 .bingo-cell.text-cell.len-long{font-size:9pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-1{font-size:30pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-2{font-size:21pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-3{font-size:14pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-4{font-size:11pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-5{font-size:9pt}
+  #print-area .bingo-card.preview-2.grid-5 .bingo-cell.text-cell.len-long{font-size:7pt}
   #print-area .bingo-card.preview-2.grid-3 .bingo-cell.free{font-size:20pt}
   #print-area .bingo-card.preview-2.grid-4 .bingo-cell.free{font-size:15pt}
   #print-area .bingo-card.preview-2.grid-5 .bingo-cell.free{font-size:11pt}
@@ -876,23 +899,27 @@
   #print-area .bingo-card.preview-4.grid-3 .bingo-cell{font-size:22pt}
   #print-area .bingo-card.preview-4.grid-4 .bingo-cell{font-size:17pt}
   #print-area .bingo-card.preview-4.grid-5 .bingo-cell{font-size:13pt}
+  /* 4-up icon-cell */
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.icon-cell{font-size:30pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.icon-cell{font-size:24pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.icon-cell{font-size:18pt}
   /* 4-up text-cell by length */
-  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-1{font-size:22pt}
-  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-2{font-size:18pt}
-  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-3{font-size:14pt}
-  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-4{font-size:11pt}
-  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-5{font-size:9pt}
-  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-long{font-size:7pt}
-  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-1{font-size:17pt}
-  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-2{font-size:14pt}
-  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-3{font-size:11pt}
-  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-4{font-size:8pt}
-  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-5{font-size:7pt}
-  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-long{font-size:5.5pt}
-  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-1{font-size:13pt}
-  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-2{font-size:11pt}
-  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-3{font-size:8.5pt}
-  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-4{font-size:6.5pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-1{font-size:34pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-2{font-size:22pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-3{font-size:16pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-4{font-size:12pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-5{font-size:10pt}
+  #print-area .bingo-card.preview-4.grid-3 .bingo-cell.text-cell.len-long{font-size:8pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-1{font-size:25pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-2{font-size:17pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-3{font-size:12pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-4{font-size:9pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-5{font-size:7.5pt}
+  #print-area .bingo-card.preview-4.grid-4 .bingo-cell.text-cell.len-long{font-size:6pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-1{font-size:19pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-2{font-size:13pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-3{font-size:9pt}
+  #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-4{font-size:7pt}
   #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-5{font-size:5.5pt}
   #print-area .bingo-card.preview-4.grid-5 .bingo-cell.text-cell.len-long{font-size:4.5pt}
   #print-area .bingo-card.preview-4.grid-3 .bingo-cell.free{font-size:13pt}
@@ -1070,6 +1097,7 @@
           <!-- TEXT -->
           <div class="content-block hidden" id="block-text">
             <div class="section-desc">輸入任意文字片語。可用<strong>換行</strong>、<strong>半形逗號 ,</strong> 、<strong>全形逗號 ,</strong> 、<strong>頓號 、</strong> 或<strong>分號</strong>分隔,系統會自動辨識。</div>
+            <div class="tip">想讓字體最大、視覺最強烈?建議使用 <strong>3×3 格子</strong> 搭配 <strong>不超過 9 個詞</strong>,字體會自動放大至佔滿整格。</div>
             <div class="field">
               <label class="label">您的內容</label>
               <textarea class="textarea" id="text-list" rows="10" placeholder="貓
@@ -1654,7 +1682,7 @@ function renderCardHTML(card, num, sizeClass){
                      : len === 4 ? 'len-4' : len === 5 ? 'len-5' : 'len-long';
       return `<div class="bingo-cell text-cell ${lenClass}">${escapeHTML(c.display)}</div>`;
     }
-    if(c.type === 'icon') return `<div class="bingo-cell">${c.display}</div>`;
+    if(c.type === 'icon') return `<div class="bingo-cell icon-cell">${c.display}</div>`;
     return `<div class="bingo-cell">${escapeHTML(c.display)}</div>`;
   }).join('');
 
